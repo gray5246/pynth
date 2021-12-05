@@ -1,5 +1,0 @@
-midi = Notein(poly=10, scale=0, first=0, last=127, channel=0)
-pitch = MToF(midi['pitch'])
-amp = MidiAdsr(midi['velocity'])
-wave = SquareTable(order=15).normalize()
-oscs = Osc(table=wave, freq=pitch, mul=amp).out()
