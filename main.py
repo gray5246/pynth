@@ -31,8 +31,6 @@ if __name__ == "__main__":
                 pygame.quit()
             if ev.type == pygame.MOUSEBUTTONDOWN:
                 if mouse[0] in range(200, 600) and mouse[1] in range(200, 600):
-                    s.start()
-                    s.gui(locals())
                     wantsynth = True
 
         screen.fill((60, 25, 60))
@@ -47,8 +45,34 @@ if __name__ == "__main__":
 
         screen.blit(text, (250, 370))
         if wantsynth == True:
-            synt = instruments.BasicOsc().out()
-            synt.controller()
+            from pyo import *
+
+            s = Server().boot()
+
+            # Two streams of midi pitches chosen randomly in a predefined list.
+            # The argument `choice` of Choice object can be a list of lists to
+            # list-expansion.
+            mid = Choice(choice=[50, 54, 56, 57, 61], freq=[4, 2])
+
+            env = MidiAdsr(mid, attack=0.001, decay=0.05, sustain=0.7, release=0.1, mul=0.1, )
+            # Converts midi pitches to frequencies and applies the jitters.
+            fr = MToF(mid, mul=env)
+
+            # Chooses a new feedback value, between 0 and 0.15, every 4 seconds.
+            fd = Randi(min=0, max=0.15, freq=0.25)
+
+            # RandInt generates a pseudo-random integer number between 0 and `max`
+            # values at a frequency specified by `freq` parameter. It holds the
+            # value until the next generation.
+            # Generates an new LFO frequency once per second.
+            sp = RandInt(max=6, freq=1, add=8)
+            # Creates an LFO oscillating between 0 and 0.4.
+            amp = Sine(sp, mul=0.2, add=0.2)
+
+            # A simple synth...
+            a = SineLoop(freq=fr, feedback=fd, mul=amp).out()
+            s.start()
+            s.gui(locals())
         pygame.display.update()
 
 
