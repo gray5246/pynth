@@ -3,6 +3,7 @@ class BasicOsc:
     def __init__(self, transpo=1, mul=1):
         self.transpo = Sig(transpo)
         self.note = Notein(poly=10, scale=1, first=0, last=127)
+        self.mid = Choice(choice=choosekeys(), freq=[1, 1])
 
         self.pit = self.note["pitch"] * self.transpo
         self.amp = MidiAdsr(self.note["velocity"], attack=0.001, decay=0.05, sustain=0.7, release=0.1, mul=0.1, )

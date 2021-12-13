@@ -24,6 +24,37 @@ if __name__ == "__main__":
     color_dark = (0, 100, 0)
     smallfont = pygame.font.SysFont('Corbel', 60, bold=True)
     text = smallfont.render('START', True, color)
+    def choosekeys():
+        keys = input("""Choose your notes or preset separated by spaces:\n
+                     C3 - 50
+                     C# - 51
+                     D  - 52
+                     D# - 53
+                     E  - 54
+                     F  - 55
+                     F# - 56
+                     G  - 57
+                     G# - 58
+                     A  - 59
+                     A# - 60
+                     B  - 61
+                     C4 - 62
+                     """)
+        lister = keys.split(" ")
+        if "minor" in lister:
+            return [38, 40, 41, 43, 46, 48]
+        if "chord" in lister:
+            return [[50, 54, 57, 59], [47, 50, 54, 57]]
+        nl = []
+        ok = False
+        while ok != True:
+            try:
+                for ent in lister:
+                    nl.append(int(ent))
+            except ValueError as e:
+                print("You mistyped a number or entered a non-number character.")
+            ok = True
+        return nl
     while running:
         wantsynth = False
         for ev in pygame.event.get():
@@ -49,30 +80,26 @@ if __name__ == "__main__":
 
             s = Server().boot()
 
-            # Two streams of midi pitches chosen randomly in a predefined list.
-            # The argument `choice` of Choice object can be a list of lists to
-            # list-expansion.
-            mid = Choice(choice=[50, 54, 56, 57, 61], freq=[4, 2])
-
+            rander = random.choice([2, 4, 3, 8])
+            mid = Choice(choice=choosekeys(), freq=[rander])
             env = MidiAdsr(mid, attack=0.001, decay=0.05, sustain=0.7, release=0.1, mul=0.1, )
-            # Converts midi pitches to frequencies and applies the jitters.
             fr = MToF(mid, mul=env)
-
-            # Chooses a new feedback value, between 0 and 0.15, every 4 seconds.
-            fd = Randi(min=0, max=0.15, freq=0.25)
-
-            # RandInt generates a pseudo-random integer number between 0 and `max`
-            # values at a frequency specified by `freq` parameter. It holds the
-            # value until the next generation.
-            # Generates an new LFO frequency once per second.
-            sp = RandInt(max=6, freq=1, add=8)
-            # Creates an LFO oscillating between 0 and 0.4.
+            fd = Randi(min=0, max=0.05, freq=0.25)
+            sp = RandInt(max=1, freq=1, add=2)
             amp = Sine(sp, mul=0.2, add=0.2)
+            a = SineLoop(freq=fr, feedback=fd, mul=0.1).out()
 
-            # A simple synth...
-            a = SineLoop(freq=fr, feedback=fd, mul=amp).out()
+            osc1 = LFO(fr, type=1, mul=0.1).mix(1)
+
+            mix = Mix([osc1], voices=1)
+
+            damp = ButLP(mix, freq=5000)
+
+            notch = ButBR(damp, mul=1).out()
+            screen.fill((255, 255, 255))
             s.start()
             s.gui(locals())
+            pass
         pygame.display.update()
 
 
