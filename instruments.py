@@ -1,5 +1,5 @@
 from pyo import *
-from main import *
+from mido import MidiFile
 class BasicOsc:
     def self(self, **args):
         EventInstrument.__init__(self, **args)
@@ -40,11 +40,11 @@ def choosekey():
     lister = keys.split(" ")
     nl = []
     if "minor" in lister:
-        nl = [50, 53, 57, 60, 62]
-    if "chord" in lister:
-        nl = [[50, 54, 57, 59], [47, 50, 54, 57]]
+        nl = [50, 53, 55, 57, 60]
     if "major" in lister:
-        nl = [50, 54, 57, 59, 62]
+        nl = [50, 54, 55, 57, 59]
+    if "phrygian" in lister:
+        nl = [50, 51, 54, 55, 57, 58, 60]
     ok = False
     if len(nl) < 1:
         while ok != True:
