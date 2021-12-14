@@ -1,24 +1,61 @@
 from pyo import *
+from main import *
 class BasicOsc:
-    def __init__(self, transpo=1, mul=1):
-        self.transpo = Sig(transpo)
-        self.note = Notein(poly=10, scale=1, first=0, last=127)
-        self.mid = Choice(choice=choosekeys(), freq=[1, 1])
+    def self(self, **args):
+        EventInstrument.__init__(self, **args)
 
-        self.pit = self.note["pitch"] * self.transpo
-        self.amp = MidiAdsr(self.note["velocity"], attack=0.001, decay=0.05, sustain=0.7, release=0.1, mul=0.1, )
+        # self.freq is derived from the 'degree' argument.
+        self.phase = Phasor([self.freq, self.freq * 1.003])
 
-        self.osc1 = LFO(self.pit, sharp=0.5, type=2, mul=self.amp).mix(1)
+        # self.dur is derived from the 'beat' argument.
+        self.duty = Expseg([(0, 0.05), (self.dur, 0.5)], exp=4).play()
 
-        self.mix = Mix([self.osc1], voices=1)
+        self.osc = Compare(self.phase, self.duty, mode="<", mul=1, add=-0.5)
 
-        self.damp = ButLP(self.mix, freq=5000)
+        # EventInstrument created the amplitude envelope as self.env.
+        self.filt = ButLP(self.osc, freq=5000, mul=self.env).out()
 
-        self.notch = ButBR(self.damp, mul=mul)
-    def out(self):
-        self.notch.out()
-        return self
-    def controller(self):
-        self.amp.ctrl(title='Envelope')
-    def sig(self):
-        return self.notch
+def playfile(file, instrument):
+    instrument.note = (MidiFile(file))
+    for message in instrument.note.play():
+        s.addMidiEvent(*message.bytes())
+        s = Server().boot()
+
+def choosekey():
+    keys = input("""Choose your notes or preset separated by spaces:\n
+                 C3 - 50
+                 C# - 51
+                 D  - 52
+                 D# - 53
+                 E  - 54
+                 F  - 55
+                 F# - 56
+                 G  - 57
+                 G# - 58
+                 A  - 59
+                 A# - 60
+                 B  - 61
+                 C4 - 62
+                 """)
+    lister = keys.split(" ")
+    nl = []
+    if "minor" in lister:
+        nl = [50, 53, 57, 60, 62]
+    if "chord" in lister:
+        nl = [[50, 54, 57, 59], [47, 50, 54, 57]]
+    if "major" in lister:
+        nl = [50, 54, 57, 59, 62]
+    ok = False
+    if len(nl) < 1:
+        while ok != True:
+            try:
+                for ent in lister:
+                    nl.append(int(ent))
+            except ValueError as e:
+                print("You mistyped a number or entered a non-number character.")
+            ok = True
+    return nl
+
+
+
+
